@@ -1,160 +1,279 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# import the required libraries
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import warnings
+warnings.filterwarnings("ignore")
 
-# C extensions
-*.so
+# read the data
+df = pd.read_csv("/content/census-income_final (4).csv", skipinitialspace= True)
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+df.head()
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+#let us see the shape
+df.shape
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+df.info()
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
+df.describe(include = 'all')
 
-# Translations
-*.mo
-*.pot
+df.dtypes
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+df.columns
 
-# Flask stuff:
-instance/
-.webassets-cache
+df = df.rename(columns = {'Unnamed: 14' : 'annual_income'})
 
-# Scrapy stuff:
-.scrapy
+df.columns
 
-# Sphinx documentation
-docs/_build/
+df['annual_income'].value_counts()
 
-# PyBuilder
-.pybuilder/
-target/
+#let's engineer the target columns
+#np.where
+df['annual_income'] = np.where(df['annual_income'] == '>50K',1,0)
 
-# Jupyter Notebook
-.ipynb_checkpoints
+df['annual_income'].value_counts() #changes
 
-# IPython
-profile_default/
-ipython_config.py
+#null value imputation
+df.isna().sum()  #that's great no null value
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+df.columns
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
+df['native-country'].value_counts()
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
+df.loc[df['workclass'] == '?']
 
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/#use-with-ide
-.pdm.toml
+data = df.replace("?",np.nan)
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
+data.isna().sum()
 
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
+data = data.dropna()
 
-# SageMath parsed files
-*.sage.py
+data.isna().sum()
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+data.shape
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# duplicate rows
+len(data[data.duplicated()])
 
-# Rope project settings
-.ropeproject
+data.drop_duplicates(inplace = True)
 
-# mkdocs documentation
-/site
+data.shape
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+col = df.columns
+col
 
-# Pyre type checker
-.pyre/
+import matplotlib.pyplot as plt
+for col_name in col:
+  if (data[col_name].dtypes == 'int64' or data[col_name].dtypes == 'float64'):
+    plt.boxplot(data[col_name])
+    plt.xlabel(col_name)
+    plt.ylabel('count')
+    plt.show()
 
-# pytype static type analyzer
-.pytype/
+#data = data[((df['age']>=Q1-1.5*IQR) & (data['age']<=Q3+1.5*IQR))]
+Q1 = data['fnlwgt'].quantile(0.25)
+Q3 = data['fnlwgt'].quantile(0.75)
 
-# Cython debug symbols
-cython_debug/
+IQR=Q3-Q1
 
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
+data = data[((data['fnlwgt']>=Q1-1.5*IQR) & (data['fnlwgt']<=Q3+1.5*IQR))]
+
+Q1 = data['education-num'].quantile(0.25)
+Q3 = data['education-num'].quantile(0.75)
+
+IQR = Q3-Q1
+
+data = data[((data['education-num']>=Q1-1.5*IQR) & (data['education-num']<=Q3+1.5*IQR))]
+
+Q1 = data['capital-gain'].quantile(0.25)
+Q3 = data['capital-gain'].quantile(0.75)
+
+IQR = Q3-Q1
+
+data = data[((data['capital-gain']>=Q1-1.5*IQR) & (data['capital-gain']<=Q3+1.5*IQR))]
+
+Q1 = data['capital-loss'].quantile(0.25)
+Q3 = data['capital-loss'].quantile(0.75)
+
+IQR = Q3-Q1
+
+data = data[((data['capital-loss']>=Q1-1.5*IQR) & (data['capital-loss']<=Q3+1.5*IQR))]
+
+Q1 = data['hours-per-week'].quantile(0.25)
+Q3 = data['hours-per-week'].quantile(0.75)
+
+IQR = Q3-Q1
+
+data = data[((data['hours-per-week']>=Q1-1.5*IQR) & (data['hours-per-week']<=Q3+1.5*IQR))]
+
+import matplotlib.pyplot as plt
+for col_name in col:
+  if (data[col_name].dtypes == 'int64' or data[col_name].dtypes == 'float64'):
+    plt.boxplot(data[col_name])
+    plt.xlabel(col_name)
+    plt.ylabel('count')
+    plt.show()
+
+# feature engineering
+# encoding
+# 1. label encoding
+# 2. one - hot encoding
+
+# label encoding
+col_list = []
+for col in data.columns:
+  if ((data[col].dtypes == 'object') & (col != 'annual_income')):
+    col_list.append(col)
+col_list
+
+#import the label encoder class
+from sklearn.preprocessing import LabelEncoder
+
+label = LabelEncoder()
+
+for i in col_list:
+  data[i] = label.fit_transform(data[i])
+
+data.head()
+data.dtypes
+
+# feature selection
+#vif
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+col_list = []
+for col in data.columns:
+    if((data[col].dtype!="object") & (col!='annual_income')): # only num cols expect target
+        col_list.append(col)
+
+X = data[col_list]
+vif_data = pd.DataFrame()
+vif_data['Feature'] = X.columns
+vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+print(vif_data)
+
+data = data.drop(['hours-per-week'], axis = 1)
+
+# feature selection
+#vif
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+col_list = []
+for col in data.columns:
+    if((data[col].dtype!="object") & (col!='annual_income')): # only num cols expect target
+        col_list.append(col)
+
+X = data[col_list]
+vif_data = pd.DataFrame()
+vif_data['Feature'] = X.columns
+vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+print(vif_data)
+
+data = data.drop(['native-country'], axis = 1)
+
+# feature selection
+#vif
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+col_list = []
+for col in data.columns:
+    if((data[col].dtype!="object") & (col!='annual_income')): # only num cols expect target
+        col_list.append(col)
+
+X = data[col_list]
+vif_data = pd.DataFrame()
+vif_data['Feature'] = X.columns
+vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+print(vif_data)
+
+data = data.drop(['education-num'], axis = 1)
+
+# feature selection
+#vif
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+col_list = []
+for col in data.columns:
+    if((data[col].dtype!="object") & (col!='annual_income')): # only num cols expect target
+        col_list.append(col)
+
+X = data[col_list]
+vif_data = pd.DataFrame()
+vif_data['Feature'] = X.columns
+vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+print(vif_data)
+
+data = data.drop(['capital-gain','capital-loss','race'], axis = 1)
+
+# feature selection
+#vif
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+col_list = []
+for col in data.columns:
+    if((data[col].dtype!="object") & (col!='annual_income')): # only num cols expect target
+        col_list.append(col)
+
+X = data[col_list]
+vif_data = pd.DataFrame()
+vif_data['Feature'] = X.columns
+vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+print(vif_data)
+
+data.columns
+
+# feature selection
+#vif
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+col_list = []
+for col in data.columns:
+    if((data[col].dtype!="object") & (col!='annual_income')): # only num cols expect target
+        col_list.append(col)
+
+X = data[col_list]
+vif_data = pd.DataFrame()
+vif_data['Feature'] = X.columns
+vif_data['VIF'] = [variance_inflation_factor(X.values, i) for i in range(len(X.columns))]
+print(vif_data)
+
+# machine learning
+x = data.iloc[:,:-1] #independent features
+y = data['annual_income']  #dependent feature
+
+x_train,x_test,y_train,y_test = train_test_split(x,y,test_size = 0.3, random_state = 56)
+x_train
+
+from sklearn.linear_model import LogisticRegression
+log_reg = LogisticRegression()
+log_reg.fit(x_train,y_train)  #for training the model
+
+test_pred = log_reg.predict(x_test)
+test_pred
+
+from sklearn.metrics import *
+c1 = confusion_matrix(y_test,test_pred)
+c1
+
+accuracy_score(y_test,test_pred)
+
+# Decision Tree Classifier
+from sklearn.tree import DecisionTreeClassifier
+dt = DecisionTreeClassifier()
+dt.fit(x_train,y_train)
+dt_pred = dt.predict(x_test)
+accuracy_score(dt_pred,y_test)
+
+# Random Forest Classifier
+from sklearn.ensemble import RandomForestClassifier
+rt = RandomForestClassifier()
+rt.fit(x_train,y_train)
+rt_pred = rt.predict(x_test)
+accuracy_score(rt_pred,y_test)
+rt_pred
+
+# conclusion
+
+1. Random Forest gives us best accuracy while classfying the income.
+
+2. In case of Random Forest number incorrectly classified values are less.
